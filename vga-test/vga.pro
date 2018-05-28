@@ -1,4 +1,4 @@
-update=Sat 26 May 2018 13:00:09 BST
+update=Mon 28 May 2018 13:53:05 BST
 version=1
 last_client=kicad
 [pcbnew]
@@ -25,9 +25,19 @@ version=1
 NetIExt=net
 [general]
 version=1
+[schematic_editor]
+version=1
+PageLayoutDescrFile=
+PlotDirectoryName=plots
+SubpartIdSeparator=0
+SubpartFirstId=65
+NetFmtName=
+SpiceForceRefPrefix=0
+SpiceUseNetNumbers=0
+LabSize=60
 [eeschema]
 version=1
-LibDir=
+LibDir=lib
 [eeschema/libraries]
 LibName1=power
 LibName2=device
@@ -58,10 +68,6 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=lib/custom7400
-LibName31=lib/65xx
-LibName32=lib/as6c1008
-LibName33=lib/z84c00
-LibName34=lib/nano
-LibName35=lib/as6c4008
-LibName36=lib/74hc30
+LibName30=lib/cy62256
+LibName31=lib/at28c64b
+LibName32=lib/nano

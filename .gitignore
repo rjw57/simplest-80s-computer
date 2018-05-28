@@ -1,0 +1,8 @@
+# Kicad stuff
+*.bak
+*.bck
+*-cache.lib
+*-bak
+*.dsn
+*.ses
+*.rpt

@@ -1,0 +1,229 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:custom7400
+LIBS:65xx
+LIBS:as6c1008
+LIBS:z84c00
+LIBS:nano
+LIBS:computer-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 4 4
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L 74LS138 U?
+U 1 1 5AF51FC7
+P 3900 3050
+F 0 "U?" H 3600 2550 50  0000 L TNN
+F 1 "74HC138" V 3900 3050 50  0000 C CNN
+F 2 "" H 3900 3050 50  0001 C CNN
+F 3 "" H 3900 3050 50  0001 C CNN
+	1    3900 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 5AF52005
+P 3900 3550
+F 0 "#PWR?" H 3900 3300 50  0001 C CNN
+F 1 "GND" H 3900 3400 50  0000 C CNN
+F 2 "" H 3900 3550 50  0001 C CNN
+F 3 "" H 3900 3550 50  0001 C CNN
+	1    3900 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L VCC #PWR?
+U 1 1 5AF5201B
+P 3900 2550
+F 0 "#PWR?" H 3900 2400 50  0001 C CNN
+F 1 "VCC" H 3900 2700 50  0000 C CNN
+F 2 "" H 3900 2550 50  0001 C CNN
+F 3 "" H 3900 2550 50  0001 C CNN
+	1    3900 2550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3900 3550 3900 3500
+Wire Wire Line
+	3900 2550 3900 2600
+Text HLabel 1500 4800 0    60   Input ~ 0
+~IORQ
+Text HLabel 1500 4100 0    60   Input ~ 0
+A6
+Text HLabel 1500 4300 0    60   Input ~ 0
+A7
+Text HLabel 1500 3050 0    60   Input ~ 0
+A3
+Text HLabel 1500 3200 0    60   Input ~ 0
+A4
+Text HLabel 1500 3350 0    60   Input ~ 0
+A5
+Text HLabel 1500 2600 0    60   Input ~ 0
+A2
+Text HLabel 1500 2500 0    60   Input ~ 0
+A1
+Text HLabel 1500 2400 0    60   Input ~ 0
+A0
+$Comp
+L 74HC00 U?
+U 1 1 5AF5218D
+P 2300 4200
+F 0 "U?" H 2300 4250 50  0000 C CNN
+F 1 "74HC00" H 2300 4100 50  0000 C CNN
+F 2 "" H 2300 4200 50  0001 C CNN
+F 3 "" H 2300 4200 50  0001 C CNN
+	1    2300 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 5AF521F6
+P 2100 4450
+F 0 "#PWR?" H 2100 4200 50  0001 C CNN
+F 1 "GND" H 2100 4300 50  0000 C CNN
+F 2 "" H 2100 4450 50  0001 C CNN
+F 3 "" H 2100 4450 50  0001 C CNN
+	1    2100 4450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 4450 2100 4400
+$Comp
+L VCC #PWR?
+U 1 1 5AF52223
+P 2100 3950
+F 0 "#PWR?" H 2100 3800 50  0001 C CNN
+F 1 "VCC" H 2100 4100 50  0000 C CNN
+F 2 "" H 2100 3950 50  0001 C CNN
+F 3 "" H 2100 3950 50  0001 C CNN
+	1    2100 3950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 3950 2100 4000
+Wire Wire Line
+	1500 4100 1700 4100
+Wire Wire Line
+	1500 4300 1700 4300
+Wire Wire Line
+	1500 4800 3100 4800
+$Comp
+L 74LS27 U?
+U 1 1 5AF522CB
+P 2300 3200
+F 0 "U?" H 2300 3250 50  0000 C CNN
+F 1 "74HC27" H 2300 3150 50  0000 C CNN
+F 2 "" H 2300 3200 50  0001 C CNN
+F 3 "" H 2300 3200 50  0001 C CNN
+	1    2300 3200
+	1    0    0    -1  
+$EndComp
+$Comp
+L VCC #PWR?
+U 1 1 5AF5231E
+P 2100 2950
+F 0 "#PWR?" H 2100 2800 50  0001 C CNN
+F 1 "VCC" H 2100 3100 50  0000 C CNN
+F 2 "" H 2100 2950 50  0001 C CNN
+F 3 "" H 2100 2950 50  0001 C CNN
+	1    2100 2950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 2950 2100 3000
+$Comp
+L GND #PWR?
+U 1 1 5AF52331
+P 2100 3450
+F 0 "#PWR?" H 2100 3200 50  0001 C CNN
+F 1 "GND" H 2100 3300 50  0000 C CNN
+F 2 "" H 2100 3450 50  0001 C CNN
+F 3 "" H 2100 3450 50  0001 C CNN
+	1    2100 3450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 3450 2100 3400
+Wire Wire Line
+	1500 3350 1700 3350
+Wire Wire Line
+	1700 3200 1500 3200
+Wire Wire Line
+	1500 3050 1700 3050
+Wire Wire Line
+	2900 3200 3300 3200
+Wire Wire Line
+	3300 3300 3000 3300
+Wire Wire Line
+	3000 3300 3000 4200
+Wire Wire Line
+	3000 4200 2900 4200
+Wire Wire Line
+	3300 3400 3100 3400
+Wire Wire Line
+	3100 3400 3100 4800
+Wire Wire Line
+	1500 2600 2900 2600
+Wire Wire Line
+	2900 2600 2900 2900
+Wire Wire Line
+	2900 2900 3300 2900
+Wire Wire Line
+	3300 2800 3000 2800
+Wire Wire Line
+	3000 2800 3000 2500
+Wire Wire Line
+	3000 2500 1500 2500
+Wire Wire Line
+	1500 2400 3100 2400
+Wire Wire Line
+	3100 2400 3100 2700
+Wire Wire Line
+	3100 2700 3300 2700
+NoConn ~ 4500 3400
+NoConn ~ 4500 3300
+NoConn ~ 4500 3200
+NoConn ~ 4500 3100
+NoConn ~ 4500 3000
+NoConn ~ 4500 2900
+NoConn ~ 4500 2800
+$EndSCHEMATC

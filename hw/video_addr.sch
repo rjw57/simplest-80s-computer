@@ -30,12 +30,15 @@ LIBS:contrib
 LIBS:valves
 LIBS:custom7400
 LIBS:65xx
+LIBS:as6c1008
+LIBS:z84c00
+LIBS:nano
 LIBS:computer-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 2 2
+Sheet 2 4
 Title ""
 Date ""
 Rev ""
