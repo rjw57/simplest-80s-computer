@@ -16,7 +16,7 @@
 #define HEARTBEAT_PORT_BIT  0   // pin 2, free choice
 #define HEARTBEAT_PORT_NAME D
 
-#if 1
+#if 0
 // 640x480 VGA @ 60Hz
 const double dot_clock_freq       = 25.175;           // MHz
 const int h_visible_area          = 640;              // pixels
@@ -29,6 +29,22 @@ const int v_visible_area          = 480;              // lines
 const int v_front_porch           = 10;               // lines
 const int v_sync_width            = 2;                // lines
 const int v_back_porch            = 33;               // lines
+const int v_polarity              = -1;               // sign
+#endif
+
+#if 0
+// 640x408 VGA @ 60Hz centred in 640x480 window
+const double dot_clock_freq       = 25.175;           // MHz
+const int h_visible_area          = 640;              // pixels
+const int h_front_porch           = 16;               // pixels
+const int h_sync_width            = 96;               // pixels
+const int h_back_porch            = 48;               // pixels
+const int h_polarity              = -1;               // sign
+
+const int v_visible_area          = 408;              // lines
+const int v_front_porch           = 46;               // lines
+const int v_sync_width            = 2;                // lines
+const int v_back_porch            = 69;               // lines
 const int v_polarity              = -1;               // sign
 #endif
 
@@ -48,13 +64,15 @@ const int v_back_porch            = 23;               // lines
 const int v_polarity              = +1;               // sign
 #endif
 
-#if 0
-// 1024x768 XGA
-const double dot_clock_freq       = 32;               // MHz
-const int h_visible_area          = 1024/2;             // pixels
-const int h_front_porch           = 24/2;               // pixels
-const int h_sync_width            = 136/2;              // pixels
-const int h_back_porch            = 160/2;              // pixels
+#if 1
+// 1024x768 XGA with half dot clock
+// FIXME: need actual oscillator at this freq
+//const double dot_clock_freq       = 32;               // MHz
+const double dot_clock_freq       = 25.175;           // MHz
+const int h_visible_area          = 1024/2;           // pixels
+const int h_front_porch           = 24/2;             // pixels
+const int h_sync_width            = 136/2;            // pixels
+const int h_back_porch            = 160/2;            // pixels
 const int h_polarity              = -1;               // sign
 
 const int v_visible_area          = 768;              // lines
@@ -162,8 +180,7 @@ void setup() {
 
   // TOP/OCR1A is set to the total size of the frame in lines minus 1 since it
   // is zero based.
-  // TODO: determine why we need "-2" here!
-  OCR1A = whole_frame - 2;
+  OCR1A = whole_frame - 1;
 
   // OCR1B is set to the pulse width minus 1 since it is zero based.
   OCR1B = v_sync_width - 1;
