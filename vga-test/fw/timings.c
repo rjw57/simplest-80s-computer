@@ -3,21 +3,15 @@
 
 // VGA timing generator.
 //
-// Output HSYNC, VSYNC, HVIS and VVIS signals.
-//
-// NOTE: The VSYNC and VIS signals are generated in the middle of a scan line
-// and need to be synchronised with the HSYNC signal by means of an external
-// D-type flip-flop.
+// Output HSYNC, VSYNC, and VISB signals.
 
 // Pin assignment - ATMEGA328P
 #define HSYNC_PORT_BIT  5   // =OC0B, pin 11, fixed by hardware
 #define HSYNC_PORT_NAME D
-#define HVIS_PORT_BIT   3   // =OC2B, pin 5, fixed by hardware
-#define HVIS_PORT_NAME  D
-#define VSYNC_PORT_BIT  1   // pin 3, free choice
-#define VSYNC_PORT_NAME D
-#define VVIS_PORT_BIT   2   // pin 4, free choice
-#define VVIS_PORT_NAME  D
+#define VISB_PORT_BIT   3   // =OC2B, pin 5, fixed by hardware
+#define VISB_PORT_NAME  D
+#define VSYNC_PORT_BIT  2   // =OC1B, pin 16, fixed by hardware
+#define VSYNC_PORT_NAME B
 
 #define HEARTBEAT_PORT_BIT  0   // pin 2, free choice
 #define HEARTBEAT_PORT_NAME D
@@ -56,11 +50,11 @@ const int v_polarity              = +1;               // sign
 
 #if 0
 // 1024x768 XGA
-const double dot_clock_freq       = 64;               // MHz
-const int h_visible_area          = 1024;             // pixels
-const int h_front_porch           = 24;               // pixels
-const int h_sync_width            = 136;              // pixels
-const int h_back_porch            = 160;              // pixels
+const double dot_clock_freq       = 32;               // MHz
+const int h_visible_area          = 1024/2;             // pixels
+const int h_front_porch           = 24/2;               // pixels
+const int h_sync_width            = 136/2;              // pixels
+const int h_back_porch            = 160/2;              // pixels
 const int h_polarity              = -1;               // sign
 
 const int v_visible_area          = 768;              // lines
@@ -82,14 +76,14 @@ const double hvis_inactive_offset =
     0.5 * (h_back_porch_t - h_front_porch_t);
 const double whole_line           =
     h_visible_area_t + h_front_porch_t + h_sync_width_t + h_back_porch_t;
-const int whole_frame             =
+const uint16_t whole_frame             =
     v_visible_area + v_front_porch + v_sync_width + v_back_porch;
 
 // Counter timer
-const double timer_freq           = dot_clock_freq / 2;               // MHz
+const double timer_freq           = dot_clock_freq / 2;   // MHz
 
-// CPU frequency is the same as the timer frequency.
-#define F_CPU (unsigned long)(timer_freq * 1e6)
+// CPU frequency is half the dot clock
+#define F_CPU (unsigned long)((dot_clock_freq / 2) * 1e6)
 
 // Not F_CPU is set, we can include the delay utilities.
 #include <util/delay.h>
@@ -109,36 +103,20 @@ const double timer_freq           = dot_clock_freq / 2;               // MHz
   EVALUATOR(PORT, port_name) &= ~_BV(EVALUATOR(PORT, EVALUATOR(port_name, port_bit))); \
 } while(0)
 
-// Called around the middle of the HSYNC pulse. The delay between the interrupt
-// flag being set and the pin actually changing is slightly non-deterministic
-// since the current instruction needs to finish processing. We allow for slop
-// by outputting signals for the *next* line and requiring that the signals be
-// synchronised with the following HVIS pulse.
-static int row_counter = 0;
+// Called around the middle of the HSYNC pulse which will be after TCNT1 update.
+// Use the value of TCNT1 (the row counter) to determine if the VISB pulse
+// should be enabled for this line.
 ISR(TIMER0_OVF_vect) {
-  ++row_counter;
-
-  switch(row_counter) {
-    case v_front_porch:
-      if(v_polarity < 0) {
-        reset_pin(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
-      } else {
-        set_pin(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
-      }
+  // Note: TCNT1 == 0 implies start of VSYNC pulse which explains why all of
+  // these values are offset by v_front_porch.
+  switch(TCNT1) {
+    case v_sync_width + v_back_porch:
+      // Enable VISB pulse output for this line
+      TCCR2A |= (_BV(COM2B1));
       break;
-    case v_front_porch + v_sync_width:
-      if(v_polarity < 0) {
-        set_pin(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
-      } else {
-        reset_pin(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
-      }
-      break;
-    case v_front_porch + v_sync_width + v_back_porch:
-      set_pin(VVIS_PORT_NAME, VVIS_PORT_BIT);
-      break;
-    case whole_frame:
-      reset_pin(VVIS_PORT_NAME, VVIS_PORT_BIT);
-      row_counter = 0;
+    case v_sync_width + v_back_porch + v_visible_area:
+      // Disable VISB pulse output for this line
+      TCCR2A &= ~(_BV(COM2B1));
       break;
   }
 }
@@ -146,8 +124,7 @@ ISR(TIMER0_OVF_vect) {
 void setup() {
   set_pin_output(HSYNC_PORT_NAME, HSYNC_PORT_BIT);
   set_pin_output(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
-  set_pin_output(HVIS_PORT_NAME, HVIS_PORT_BIT);
-  set_pin_output(VVIS_PORT_NAME, VVIS_PORT_BIT);
+  set_pin_output(VISB_PORT_NAME, VISB_PORT_BIT);
   set_pin_output(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
 
   // Reset all timers and halt them
@@ -167,7 +144,7 @@ void setup() {
   // We use the phase-correct PWM mode so the pulse width will be 2*COMPARE/f
   // and so, COMPARE = width * f / 2.
 
-  // Timer 0:
+  // Timer 0: HSYNC
 
   // Set HSYNC pulse width,
   OCR0B = (int)(h_sync_width_t * timer_freq / 2.);
@@ -178,23 +155,61 @@ void setup() {
   TCCR0A = _BV(COM0B1) | _BV(WGM00) | ((h_polarity < 0) ? _BV(COM2B0) : 0);
   TCCR0B = _BV(WGM02) | _BV(CS00);
 
-  // Timer 2:
+  // Timer 1: VSYNC
+
+  // T1 == OC0B which is HSYNC so we can use it as a clock which is a happy
+  // co-incidence.
+
+  // TOP/OCR1A is set to the total size of the frame in lines minus 1 since it
+  // is zero based.
+  // TODO: determine why we need "-2" here!
+  OCR1A = whole_frame - 2;
+
+  // OCR1B is set to the pulse width minus 1 since it is zero based.
+  OCR1B = v_sync_width - 1;
+
+  // Fast PWM, TOP = OCR1A
+  TCCR1A = _BV(WGM11) | _BV(WGM10);
+  TCCR1B = _BV(WGM13) | _BV(WGM12);
+
+  if(v_polarity < 0) {
+    // Set OC1B on match, clear at bottom.
+    TCCR1A |= _BV(COM1B1) | _BV(COM1B0);
+  } else {
+    // Clear OC1B on match, set at bottom.
+    TCCR1A |= _BV(COM1B1);
+  }
+
+  // Depending on polarity of HSYNC, clock on rising or falling edge of T1 (aka
+  // HSYNC).
+  if(h_polarity < 0) {
+    // Clock on falling edge of T1.
+    TCCR1B |= _BV(CS12) | _BV(CS11);
+  } else {
+    // Clock on rising edge of T1.
+    TCCR1B |= _BV(CS12) | _BV(CS11) | _BV(CS10);
+  }
+
+  // Timer 2: VISB
 
   // We set the display inactive pulse width because that pulse is nearly
   // aligned to HSYNC already.
   OCR2B = (int)(hvis_inactive_width * timer_freq / 2.);
 
-  // Phase correct PWM, TOP = OCR2A, internal clock, no pre-scaling,
+  // Phase correct PWM, TOP = OCR2A, no clock, no pre-scaling,
   // OC2B pin is SET when match on counting UP and RESET when match on counting
-  // DOWN.
-  TCCR2A = _BV(COM2B1) | _BV(COM2B0) | _BV(WGM20);
+  // DOWN (see timer 0 overflow handler).
+  TCCR2A = _BV(WGM20);
   TCCR2B = _BV(WGM22) | _BV(CS20);
 
-  // Configuring the pulse polarities so that HSYNC is set OC0B when up-counting
-  // and HVIS is cleared when up-counting means that the pulses are *nearly*
-  // aligned already. However, the HSYNC pulse is not quite in the middle of the
-  // inactive HVIS region so we offset the inactive pulse from the HSYNC pulse.
+  // set default VISB value for when VISB is disabled
+  set_pin(VISB_PORT_NAME, VISB_PORT_BIT);
+
+  // The centre points of the HSYNC and VISB pulses are *nearly* aligned
+  // already. However, the HSYNC pulse is not quite in the middle of the
+  // inactive VISB region so we offset the inactive pulse from the HSYNC pulse.
   TCNT0 = 0;
+  TCNT1 = 0; // corresponds to start of vsync pulse
   TCNT2 = 256-(int)(hvis_inactive_offset * timer_freq);
 
   // Enable OVF interrupt for timer 0
