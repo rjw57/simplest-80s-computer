@@ -8,13 +8,26 @@
 // Pin assignment - ATMEGA328P
 #define HSYNC_PORT_BIT  5   // =OC0B, pin 11, fixed by hardware
 #define HSYNC_PORT_NAME D
-#define VISB_PORT_BIT   3   // =OC2B, pin 5, fixed by hardware
-#define VISB_PORT_NAME  D
+#define VISB_PORT_BIT    3   // =OC2B, pin 5, fixed by hardware
+#define VISB_PORT_NAME   D
 #define VSYNC_PORT_BIT  2   // =OC1B, pin 16, fixed by hardware
 #define VSYNC_PORT_NAME B
 
 #define HEARTBEAT_PORT_BIT  0   // pin 2, free choice
 #define HEARTBEAT_PORT_NAME D
+
+// Free choices:
+
+#define WRB_PORT_BIT 2  // pin 4
+#define WRB_PORT_NAME D
+#define DSB_PORT_BIT 4  // pin 6
+#define DSB_PORT_NAME D
+#define A0_PORT_BIT 0  // pin 14
+#define A0_PORT_NAME B
+#define A1_PORT_BIT 1  // pin 15
+#define A1_PORT_NAME B
+#define WAIT_PORT_NAME D
+#define WAIT_PORT_BIT  1   // pin 3, free choice
 
 #if 0
 // 640x480 VGA @ 60Hz
@@ -121,6 +134,8 @@ const double timer_freq           = dot_clock_freq / 2;   // MHz
   EVALUATOR(PORT, port_name) &= ~_BV(EVALUATOR(PORT, EVALUATOR(port_name, port_bit))); \
 } while(0)
 
+#define read_pin(port_name, port_bit) (EVALUATOR(PIN, port_name) & _BV(EVALUATOR(PIN, EVALUATOR(port_name, port_bit))))
+
 // Called around the middle of the HSYNC pulse which will be after TCNT1 update.
 // Use the value of TCNT1 (the row counter) to determine if the VISB pulse
 // should be enabled for this line.
@@ -139,11 +154,56 @@ ISR(TIMER0_OVF_vect) {
   }
 }
 
+void write_data(uint8_t data) {
+  PORTC &= ~0x3F;
+  PORTC |= data & 0x3F;
+  PORTD &= ~0xC0;
+  PORTD |= data & 0xC0;
+}
+
+void write(uint8_t addr, uint8_t data) {
+  if(addr & 0x1) {
+    set_pin(A0_PORT_NAME, A0_PORT_BIT);
+  } else {
+    reset_pin(A0_PORT_NAME, A0_PORT_BIT);
+  }
+
+  if(addr & 0x2) {
+    set_pin(A1_PORT_NAME, A1_PORT_BIT);
+  } else {
+    reset_pin(A1_PORT_NAME, A1_PORT_BIT);
+  }
+
+  write_data(data);
+
+  set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+  reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  while(read_pin(WAIT_PORT_NAME, WAIT_PORT_BIT)) { /* wait */ }
+  //_delay_ms(2.f * 1e-3f / dot_clock_freq);
+  set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+}
+
 void setup() {
   set_pin_output(HSYNC_PORT_NAME, HSYNC_PORT_BIT);
   set_pin_output(VSYNC_PORT_NAME, VSYNC_PORT_BIT);
   set_pin_output(VISB_PORT_NAME, VISB_PORT_BIT);
   set_pin_output(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
+
+  set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+  reset_pin(A0_PORT_NAME, A0_PORT_BIT);
+  reset_pin(A1_PORT_NAME, A1_PORT_BIT);
+
+  set_pin_output(WRB_PORT_NAME, WRB_PORT_BIT);
+  set_pin_output(DSB_PORT_NAME, DSB_PORT_BIT);
+  set_pin_output(A0_PORT_NAME, A0_PORT_BIT);
+  set_pin_output(A1_PORT_NAME, A1_PORT_BIT);
+
+  // Data bus
+  DDRC |= 0x3F;
+  DDRD |= 0xC0;
 
   // Reset all timers and halt them
   GTCCR = _BV(TSM) | _BV(PSRASY) | _BV(PSRSYNC);
@@ -238,10 +298,46 @@ void setup() {
 }
 
 void loop() {
-  set_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
-  _delay_ms(500);
-  reset_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
-  _delay_ms(500);
+  uint16_t x=0, y=0, dx=0, addr=0;
+  float r2;
+
+  for(addr=0, y=0; y<384; y++) {
+    uint8_t b = (y & 1) ? 0xAA : 0x55;
+    for(x=0; x<512; x+=8, addr++) {
+      write(0, addr & 0xFF);
+      write(1, (addr >> 8) & 0xFF);
+      write(2, b);
+    }
+  }
+
+  for(addr=0, y=0; y<384; y++) {
+    float v = y - 192.f;
+    uint8_t c1 = 0xFF, c2 = 0x00, c3 = (y & 1) ? 0x55 : 0xAA;
+    for(x=0; x<512; x+=8, addr++) {
+      uint8_t b = 0;
+      for(dx=0; dx<8; dx++) {
+        float u = (x + dx) - 256.f;
+        r2 = u*u + v*v;
+        if(r2 < 190.f*190.f) {
+          if(r2 < 128.f*123.f) {
+            b |= c3 & (1<<(7-dx));
+          } else {
+            b |= c2 & (1<<(7-dx));
+          }
+        } else {
+          b |= c1 & (1<<(7-dx));
+        }
+      }
+      write(0, addr & 0xFF);
+      write(1, (addr >> 8) & 0xFF);
+      write(2, b);
+    }
+    if(y & 1) {
+      set_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
+    } else {
+      reset_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
+    }
+  }
 }
 
 int main() {
