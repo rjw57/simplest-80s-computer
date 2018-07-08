@@ -1,5 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+#include <stdint.h>
 
 // VGA timing generator.
 //
@@ -117,9 +119,6 @@ const double timer_freq           = dot_clock_freq / 2;   // MHz
 // CPU frequency is half the dot clock
 #define F_CPU (unsigned long)((dot_clock_freq / 2) * 1e6)
 
-// Not F_CPU is set, we can include the delay utilities.
-#include <util/delay.h>
-
 #define PASTER(x,y) x ## y
 #define EVALUATOR(x, y) PASTER(x, y)
 
@@ -136,6 +135,12 @@ const double timer_freq           = dot_clock_freq / 2;   // MHz
 } while(0)
 
 #define read_pin(port_name, port_bit) (EVALUATOR(PIN, port_name) & _BV(EVALUATOR(PIN, EVALUATOR(port_name, port_bit))))
+
+#if DEMO_MODE
+// As F_CPU is set, we can include the delay utilities.
+#include <util/delay.h>
+#include "font/font.h"
+#endif
 
 // Called around the middle of the HSYNC pulse which will be after TCNT1 update.
 // Use the value of TCNT1 (the row counter) to determine if the VISB pulse
@@ -188,6 +193,35 @@ inline void write_vram(uint16_t addr, uint8_t value) {
   write(0, addr & 0xFF);
   write(1, (addr >> 8) & 0xFF);
   write(2, value);
+}
+
+static uint8_t cursor_x = 0, cursor_y = 0;
+static bool inverse_text = false;
+
+inline void print_at(uint8_t x, uint8_t y, uint8_t ch) {
+  uint16_t addr = ((uint16_t)(y) << (6+3)) + ((uint16_t)x);
+  uint16_t font_addr = ((uint16_t)(ch)<<3);
+  for(int r=0; r<8; ++r, addr+=64, font_addr++) {
+    uint8_t row = pgm_read_byte(&(font[font_addr]));
+    write_vram(addr, inverse_text ? ~row : row);
+  }
+}
+
+inline void putc(uint8_t ch) {
+  print_at(cursor_x, cursor_y, ch);
+  cursor_x += 1;
+  if(cursor_x == 64) { cursor_x = 0; cursor_y += 1; }
+  if(cursor_y == 48) { cursor_y = 0; }
+}
+
+inline void puts(const void* s) {
+  const uint8_t* buf = (const uint8_t*)s;
+  for(; *buf != '\0'; ++buf) { putc(*buf); }
+}
+
+inline void cursor_set(uint8_t x, uint8_t y) {
+  cursor_x = x < 64 ? x : 64;
+  cursor_y = y < 48 ? y : 47;
 }
 
 void setup() {
@@ -315,6 +349,16 @@ void loop() {
       write_vram(addr, b);
     }
   }
+
+  _delay_ms(2000);
+
+  cursor_set(0, 0);
+  for(uint16_t i=0; i<64*48; ++i) {
+    inverse_text = (i & 0x100) ? true : false;
+    putc(i & 0xff);
+  }
+
+  _delay_ms(2000);
 
   set_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
 
