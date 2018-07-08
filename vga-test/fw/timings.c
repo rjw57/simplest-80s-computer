@@ -364,7 +364,7 @@ void loop() {
 
   _delay_ms(2000);
 
-  inverse_text = false;
+  inverse_text = true;
   for(uint16_t i=0; i<30*64*48; ++i) {
     cursor_set(random() % 64, random() % 48);
     putc(random() & 0xff);
