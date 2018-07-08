@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/pgmspace.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 // VGA timing generator.
 //
@@ -28,6 +28,8 @@
 #define A0_PORT_NAME B
 #define A1_PORT_BIT 1  // pin 15
 #define A1_PORT_NAME B
+#define WAITB_PORT_BIT 1  // pin 3
+#define WAITB_PORT_NAME D
 
 // Define constant to 1 if should bit-bang CPU bus
 #define DEMO_MODE 1
@@ -139,6 +141,7 @@ const double timer_freq           = dot_clock_freq / 2;   // MHz
 #if DEMO_MODE
 // As F_CPU is set, we can include the delay utilities.
 #include <util/delay.h>
+#include <avr/pgmspace.h>
 #include "font/font.h"
 #endif
 
@@ -185,6 +188,7 @@ inline void write(uint8_t addr, uint8_t data) {
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
   reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
 }
@@ -359,6 +363,12 @@ void loop() {
   }
 
   _delay_ms(2000);
+
+  inverse_text = false;
+  for(uint16_t i=0; i<30*64*48; ++i) {
+    cursor_set(random() % 64, random() % 48);
+    putc(random() & 0xff);
+  }
 
   set_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
 
