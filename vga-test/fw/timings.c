@@ -26,8 +26,6 @@
 #define A0_PORT_NAME B
 #define A1_PORT_BIT 1  // pin 15
 #define A1_PORT_NAME B
-#define WAIT_PORT_NAME D
-#define WAIT_PORT_BIT  1   // pin 3, free choice
 
 #if 0
 // 640x480 VGA @ 60Hz
@@ -179,8 +177,6 @@ void write(uint8_t addr, uint8_t data) {
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
   reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
-  while(read_pin(WAIT_PORT_NAME, WAIT_PORT_BIT)) { /* wait */ }
-  //_delay_ms(2.f * 1e-3f / dot_clock_freq);
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
 }
