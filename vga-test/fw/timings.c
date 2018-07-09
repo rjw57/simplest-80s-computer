@@ -408,7 +408,7 @@ void loop() {
     }
   }
 
-  _delay_ms(2000);
+  _delay_ms(1000);
 
   for(addr=0, y=0; y<384; y++) {
     uint8_t b = 0xff;
@@ -417,7 +417,7 @@ void loop() {
     }
   }
 
-  _delay_ms(2000);
+  // _delay_ms(1000);
 
   for(addr=0, y=0; y<384; y++) {
     uint8_t b = (y & 1) ? 0xAA : 0x55;
@@ -426,7 +426,7 @@ void loop() {
     }
   }
 
-  _delay_ms(2000);
+  //_delay_ms(1000);
 
   scroll_enabled = false;
 
@@ -436,13 +436,15 @@ void loop() {
     putc(i & 0xff);
   }
 
-  _delay_ms(2000);
+  _delay_ms(1000);
 
+  /*
   inverse_text = true;
   for(uint32_t i=0; i<10ul*64ul*48ul; ++i) {
     cursor_set(random() % 64, random() % 48);
     putc(random() & 0xff);
   }
+  */
 
   scroll_enabled = true;
 
