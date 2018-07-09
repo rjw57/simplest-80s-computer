@@ -163,6 +163,16 @@ ISR(TIMER0_OVF_vect) {
   }
 }
 
+inline void set_databus_is_output(bool output) {
+  if(output) {
+    DDRC |= 0x3F;
+    DDRD |= 0xC0;
+  } else {
+    DDRC &= ~0x3F;
+    DDRD &= ~0xC0;
+  }
+}
+
 inline void write_data(uint8_t data) {
   PORTC &= ~0x3F;
   PORTC |= data & 0x3F;
@@ -170,7 +180,14 @@ inline void write_data(uint8_t data) {
   PORTD |= data & 0xC0;
 }
 
-inline void write(uint8_t addr, uint8_t data) {
+inline uint8_t read_data() {
+  set_databus_is_output(false);
+  uint8_t val = (PINC & 0x3F) | (PIND & 0xC0);
+  set_databus_is_output(true);
+  return val;
+}
+
+inline void set_addr(uint8_t addr) {
   if(addr & 0x1) {
     set_pin(A0_PORT_NAME, A0_PORT_BIT);
   } else {
@@ -182,15 +199,30 @@ inline void write(uint8_t addr, uint8_t data) {
   } else {
     reset_pin(A1_PORT_NAME, A1_PORT_BIT);
   }
+}
 
+inline void write(uint8_t addr, uint8_t data) {
+  set_addr(addr);
   write_data(data);
+
+  // it is important that the WRB pin be stable *before* DSB goes low.
+  reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+  while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
+  set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+  set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+}
+
+inline uint8_t read(uint8_t addr) {
+  set_addr(addr);
 
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
-  reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
-  set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
+  uint8_t val = read_data();
   set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
+
+  return val;
 }
 
 inline void write_vram(uint16_t addr, uint8_t value) {
@@ -199,8 +231,25 @@ inline void write_vram(uint16_t addr, uint8_t value) {
   write(2, value);
 }
 
+inline uint8_t read_vram(uint16_t addr) {
+  write(0, addr & 0xFF);
+  write(1, (addr >> 8) & 0xFF);
+  return read(2);
+}
+
 static uint8_t cursor_x = 0, cursor_y = 0;
 static bool inverse_text = false;
+static bool scroll_enabled = true;
+
+inline void scroll_up() {
+  uint16_t addr=0;
+  for(; addr<(64*47*8); ++addr) {
+    write_vram(addr, read_vram(addr + (64*8)));
+  }
+  for(; addr<(64*48*8); ++addr) {
+    write_vram(addr, 0x00);
+  }
+}
 
 inline void print_at(uint8_t x, uint8_t y, uint8_t ch) {
   uint16_t addr = ((uint16_t)(y) << (6+3)) + ((uint16_t)x);
@@ -215,7 +264,13 @@ inline void putc(uint8_t ch) {
   print_at(cursor_x, cursor_y, ch);
   cursor_x += 1;
   if(cursor_x == 64) { cursor_x = 0; cursor_y += 1; }
-  if(cursor_y == 48) { cursor_y = 0; }
+  if(cursor_y == 48) {
+    if(scroll_enabled) {
+      scroll_up(); cursor_y = 47;
+    } else {
+      cursor_x = 63; cursor_y = 47;
+    }
+  }
 }
 
 inline void puts(const void* s) {
@@ -246,8 +301,7 @@ void setup() {
   set_pin_output(A1_PORT_NAME, A1_PORT_BIT);
 
   // Data bus
-  DDRC |= 0x3F;
-  DDRD |= 0xC0;
+  set_databus_is_output(true);
 #endif
 
   // Reset all timers and halt them
@@ -348,6 +402,24 @@ void loop() {
   float r2;
 
   for(addr=0, y=0; y<384; y++) {
+    uint8_t b = 0;
+    for(x=0; x<512; x+=8, addr++) {
+      write_vram(addr, b);
+    }
+  }
+
+  _delay_ms(2000);
+
+  for(addr=0, y=0; y<384; y++) {
+    uint8_t b = 0xff;
+    for(x=0; x<512; x+=8, addr++) {
+      write_vram(addr, b);
+    }
+  }
+
+  _delay_ms(2000);
+
+  for(addr=0, y=0; y<384; y++) {
     uint8_t b = (y & 1) ? 0xAA : 0x55;
     for(x=0; x<512; x+=8, addr++) {
       write_vram(addr, b);
@@ -355,6 +427,8 @@ void loop() {
   }
 
   _delay_ms(2000);
+
+  scroll_enabled = false;
 
   cursor_set(0, 0);
   for(uint16_t i=0; i<64*48; ++i) {
@@ -365,9 +439,18 @@ void loop() {
   _delay_ms(2000);
 
   inverse_text = true;
-  for(uint16_t i=0; i<30*64*48; ++i) {
+  for(uint32_t i=0; i<10ul*64ul*48ul; ++i) {
     cursor_set(random() % 64, random() % 48);
     putc(random() & 0xff);
+  }
+
+  scroll_enabled = true;
+
+  inverse_text = false;
+  cursor_set(0, 0);
+  for(uint16_t i=0; i<300; ++i) {
+    inverse_text = !inverse_text;
+    puts(" Look Around You! ");
   }
 
   set_pin(HEARTBEAT_PORT_NAME, HEARTBEAT_PORT_BIT);
@@ -391,6 +474,14 @@ void loop() {
         }
       }
       write_vram(addr, b);
+    }
+  }
+
+  for(uint8_t i=0; i<20; ++i) {
+    for(addr=0, y=0; y<384; y++) {
+      for(x=0; x<512; x+=8, addr++) {
+        write_vram(addr, ~read_vram(addr));
+      }
     }
   }
 
