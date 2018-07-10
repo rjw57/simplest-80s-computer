@@ -208,7 +208,7 @@ inline void write(uint8_t addr, uint8_t data) {
   // it is important that the WRB pin be stable *before* DSB goes low.
   reset_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
-  while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
+  // while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
   set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
 }
@@ -218,7 +218,7 @@ inline uint8_t read(uint8_t addr) {
 
   set_pin(WRB_PORT_NAME, WRB_PORT_BIT);
   reset_pin(DSB_PORT_NAME, DSB_PORT_BIT);
-  while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
+  // while(!read_pin(WAITB_PORT_NAME, WAITB_PORT_BIT)) { };
   uint8_t val = read_data();
   set_pin(DSB_PORT_NAME, DSB_PORT_BIT);
 
