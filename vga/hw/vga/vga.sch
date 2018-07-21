@@ -1891,4 +1891,102 @@ Wire Wire Line
 	13600 4200 13600 4300
 Wire Wire Line
 	13300 4200 13300 4300
+$Comp
+L Connector_Generic:Conn_02x08_Odd_Even J?
+U 1 1 5B5538AA
+P 14000 6000
+F 0 "J?" H 14050 6517 50  0000 C CNN
+F 1 "BUS" H 14050 6426 50  0000 C CNN
+F 2 "" H 14000 6000 50  0001 C CNN
+F 3 "~" H 14000 6000 50  0001 C CNN
+	1    14000 6000
+	1    0    0    -1  
+$EndComp
+Text Label 13500 5700 0    50   ~ 0
+D0
+Wire Wire Line
+	13500 5700 13800 5700
+Text Label 13500 5800 0    50   ~ 0
+D1
+Wire Wire Line
+	13500 5800 13800 5800
+Text Label 13500 5900 0    50   ~ 0
+D2
+Wire Wire Line
+	13500 5900 13800 5900
+Text Label 13500 6000 0    50   ~ 0
+D3
+Wire Wire Line
+	13500 6000 13800 6000
+Text Label 13500 6100 0    50   ~ 0
+D4
+Wire Wire Line
+	13500 6100 13800 6100
+Text Label 13500 6200 0    50   ~ 0
+D5
+Wire Wire Line
+	13500 6200 13800 6200
+Text Label 13500 6300 0    50   ~ 0
+D6
+Wire Wire Line
+	13500 6300 13800 6300
+Text Label 13500 6400 0    50   ~ 0
+D7
+Wire Wire Line
+	13500 6400 13800 6400
+Text Label 14600 5800 2    50   ~ 0
+A0
+Wire Wire Line
+	14600 5800 14300 5800
+Text Label 14600 5900 2    50   ~ 0
+A1
+Wire Wire Line
+	14600 5900 14300 5900
+Text Label 14600 6000 2    50   ~ 0
+~RD
+Wire Wire Line
+	14600 6000 14300 6000
+Text Label 14600 6100 2    50   ~ 0
+~WR
+Wire Wire Line
+	14600 6100 14300 6100
+$Comp
+L power:+5V #PWR?
+U 1 1 5B60B1AA
+P 14400 5600
+F 0 "#PWR?" H 14400 5450 50  0001 C CNN
+F 1 "+5V" H 14415 5773 50  0000 C CNN
+F 2 "" H 14400 5600 50  0001 C CNN
+F 3 "" H 14400 5600 50  0001 C CNN
+	1    14400 5600
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5B60B21B
+P 14400 6500
+F 0 "#PWR?" H 14400 6250 50  0001 C CNN
+F 1 "GND" H 14405 6327 50  0000 C CNN
+F 2 "" H 14400 6500 50  0001 C CNN
+F 3 "" H 14400 6500 50  0001 C CNN
+	1    14400 6500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	14400 6400 14300 6400
+Wire Wire Line
+	14400 5700 14400 5600
+Wire Wire Line
+	14400 5700 14300 5700
+Wire Wire Line
+	14400 6400 14400 6500
+Text Label 14600 6200 2    50   ~ 0
+~DS
+Wire Wire Line
+	14600 6200 14300 6200
+Wire Wire Line
+	14300 6300 14400 6300
+Wire Wire Line
+	14400 6300 14400 6400
+Connection ~ 14400 6400
 $EndSCHEMATC
